@@ -1,0 +1,23 @@
+{
+  "name": "loopbench",
+  "version": "1.0.0",
+  "private": true,
+  "description": "3D control systems lab: physically modeled plants driven by controllers you write in JavaScript.",
+  "homepage": "https://umutcnkus.github.io/loopbench/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/umutcnkus/loopbench.git"
+  },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "build:dev": "node tools/build.mjs --dev",
+    "serve": "node tools/serve.mjs",
+    "generate": "node tools/gen-controllers.mjs && node tools/gen-models.mjs",
+    "test": "npm run generate && node test/core.test.mjs && node test/tune.test.mjs && node test/physics.test.mjs && node test/rigid.test.mjs && node test/sc.test.mjs"
+  },
+  "devDependencies": {
+    "codemirror": "^5.65.16",
+    "esbuild": "^0.28.2",
+    "three": "^0.170.0"
+  }
+}

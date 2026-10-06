@@ -1,0 +1,155 @@
+<title>Loopbench</title>
+<meta name="description" content="3D control systems lab with rigid-body physics and controllers you write in JavaScript.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/*__CSS__*/
+</style>
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="12" r="4"/><path d="M11 12h9M17 8l3 4-3 4"/><path d="M7 16v3h10v-3" opacity=".55"/></svg>
+      <span>Loopbench</span><small>control lab</small>
+    </div>
+    <button class="plant-btn" id="plantBtn" type="button" aria-haspopup="dialog" title="Choose a system">
+      <span class="pb-name" id="pbName">Cart-Pole</span>
+      <span class="pb-cat" id="pbCat">Underactuated</span>
+      <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+    </button>
+    <div class="transport">
+      <button class="btn" id="btnPlay" type="button" title="Run / pause (Space)"><svg viewBox="0 0 16 16" id="icoPlay" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg><span class="lbl" id="lblPlay">Pause</span></button>
+      <button class="btn icon" id="btnStep" type="button" title="Step one control period (.)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5v11l7-5.5z" fill="currentColor"/><rect x="11" y="2.5" width="2" height="11" fill="currentColor"/></svg></button>
+      <button class="btn" id="btnReset" type="button" title="Reset the simulation (Backspace)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8a4.5 4.5 0 1 0 1.3-3.2M3.5 2.5v2.8h2.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="lbl">Reset</span></button>
+      <select class="sel" id="speed" title="Simulation speed" aria-label="Simulation speed">
+        <option value="0.1">0.1×</option>
+        <option value="0.25">0.25×</option>
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+      </select>
+    </div>
+    <div class="clock"><span>t <b id="simTime">0.000</b> s</span><span class="rt">RT <b id="rtf">1.00</b>×</span></div>
+    <div class="spacer"></div>
+    <div class="pill" id="statusPill" data-level="idle">Ready</div>
+  </header>
+
+  <main class="workspace" id="workspace">
+    <section class="stage" id="stage">
+      <div class="viewport" id="viewport">
+        <div class="hud" id="hud"></div>
+        <div class="view-tools">
+          <button class="btn icon" id="btnCam" type="button" title="Reset camera"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5.5V3h2.5M11.5 3H14v2.5M14 10.5V13h-2.5M4.5 13H2v-2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2.2" fill="currentColor"/></svg></button>
+          <button class="btn icon" id="btnFollow" type="button" aria-pressed="false" title="Follow the system with the camera"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.8" fill="currentColor"/><path d="M8 0.8v2.4M8 12.8v2.4M0.8 8h2.4M12.8 8h2.4" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <button class="btn icon" id="btnPoke" type="button" title="Push the system (P)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h8M7 4.5L10.5 8 7 11.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 3v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+          <button class="btn icon" id="btnFull" type="button" title="Full screen"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        </div>
+        <div class="view-hint" id="viewHint">Drag a part to push it · scroll to zoom · right-drag to pan</div>
+        <div class="keys-help" id="keysHelp" hidden></div>
+        <div class="banner" id="errBanner" role="alert" hidden>
+          <svg class="bi" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.2v4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="11.4" r="1" fill="currentColor"/></svg>
+          <div id="errText"></div>
+          <button class="btn ghost icon bx" id="errClose" type="button" title="Dismiss"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        </div>
+      </div>
+      <div class="splitter" id="splitV" role="separator" aria-orientation="horizontal"></div>
+      <div class="scope" id="scope">
+        <div class="scope-bar">
+          <span class="label">Scope</span>
+          <select class="sel" id="winSel" aria-label="Time window" style="height:26px;font-size:12.5px">
+            <option value="5">5 s</option>
+            <option value="10" selected>10 s</option>
+            <option value="20">20 s</option>
+            <option value="40">40 s</option>
+            <option value="80">80 s</option>
+          </select>
+          <div class="metrics" id="metrics"></div>
+          <div class="spacer"></div>
+          <span class="pin-note" id="pinNote" hidden></span>
+          <button class="btn pin" id="btnPin" type="button" aria-pressed="false" style="height:26px;font-size:12.5px" title="Keep these traces as a faded overlay, then reset or change the controller to compare">Pin run</button>
+          <button class="btn" id="btnCsv" type="button" style="height:26px;font-size:12.5px" title="Copy the logged signals as CSV">Copy CSV</button>
+        </div>
+      </div>
+    </section>
+    <div class="splitter-x" id="splitH" role="separator" aria-orientation="vertical"></div>
+    <aside class="side" id="side">
+      <nav class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="controller" aria-selected="true">Controller</button>
+        <button class="tab" role="tab" data-tab="plant" aria-selected="false">Plant</button>
+        <button class="tab" role="tab" data-tab="scenario" aria-selected="false">Scenario</button>
+        <button class="tab" role="tab" data-tab="docs" aria-selected="false">API</button>
+      </nav>
+      <div class="tab-body controller" data-pane="controller">
+        <div class="ctl-bar">
+          <select class="sel" id="tplSel" aria-label="Controller template"></select>
+          <button class="btn primary" id="btnRun" type="button" title="Compile and run (Ctrl/Cmd+Enter)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>Run <kbd>⌘↵</kbd></button>
+        </div>
+        <div class="ctl-sub">
+          <label>Rate <select class="sel" id="rateSel" aria-label="Controller rate">
+            <option value="25">25 Hz</option><option value="50">50 Hz</option><option value="100">100 Hz</option><option value="200">200 Hz</option><option value="500">500 Hz</option><option value="1000">1 kHz</option>
+          </select></label>
+          <label class="check"><input type="checkbox" id="keepState"> Keep state on run</label>
+          <span class="spacer"></span>
+          <span id="dirtyNote"></span>
+          <button class="btn ghost" id="btnRevert" type="button" style="height:26px;font-size:12.5px" title="Restore the selected template">Revert</button>
+        </div>
+        <div class="editor" id="editor"></div>
+        <div class="tunables" id="tunables" hidden>
+          <div class="tn-head">
+            <span class="label">Live gains <b id="tnCount"></b></span>
+            <span class="tn-hint">from <code>tunable()</code> · applied instantly</span>
+            <span class="spacer"></span>
+            <button class="btn ghost" id="btnTuneReset" type="button" title="Put every slider back to the value in the code">Reset</button>
+            <button class="btn ghost" id="btnTuneWrite" type="button" title="Replace the defaults in the code with the current slider values">Write to code</button>
+          </div>
+          <div class="tn-grid" id="tnGrid"></div>
+        </div>
+        <div class="console" id="console">
+          <div class="console-head">Console <span class="spacer"></span><button class="btn ghost" id="btnClearLog" type="button">Clear</button></div>
+          <div class="console-body" id="consoleBody" aria-live="polite"></div>
+        </div>
+      </div>
+      <div class="tab-body" data-pane="plant" hidden><div class="pane" id="plantPane"></div></div>
+      <div class="tab-body" data-pane="scenario" hidden><div class="pane" id="scenarioPane"></div></div>
+      <div class="tab-body docs" data-pane="docs" hidden><div class="pane" id="docsPane"></div></div>
+    </aside>
+  </main>
+
+  <div class="gallery" id="gallery" role="dialog" aria-modal="true" aria-labelledby="galTitle" hidden>
+    <div class="gallery-inner">
+      <div class="gallery-head">
+        <h2 id="galTitle">Systems</h2>
+        <p>Each one is a nonlinear model integrated with 4th-order Runge–Kutta at 0.25–2 ms steps.</p>
+        <button class="btn ghost icon" id="galClose" type="button" title="Close"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      </div>
+      <div class="cards" id="cards"></div>
+    </div>
+  </div>
+  <div id="bootMsg" style="position:fixed;inset:auto 16px 16px auto;font:13px system-ui;color:#888" hidden></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/hint/show-hint.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/selection/active-line.min.js"></script>
+<script>
+  window.__bootTimer = setTimeout(function () {
+    if (window.__booted) return;
+    var m = document.getElementById('bootMsg');
+    if (m) { m.hidden = false; m.textContent = 'Still loading the 3D engine from cdn.jsdelivr.net…'; }
+  }, 6000);
+</script>
+<script type="module">
+/*__APP__*/
+</script>
