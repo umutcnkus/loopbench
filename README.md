@@ -1,5 +1,7 @@
 # Loopbench
 
+[![Deploy to GitHub Pages](https://github.com/umutcnkus/loopbench/actions/workflows/pages.yml/badge.svg)](https://github.com/umutcnkus/loopbench/actions/workflows/pages.yml)
+
 A 3D control-systems lab that runs in the browser. Twelve physically modeled plants, from a cart-pole to a landing rocket, run in real time while a controller **you write in JavaScript** closes the loop.
 
 **Open it:** https://umutcnkus.github.io/loopbench/
